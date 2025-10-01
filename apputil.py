@@ -13,24 +13,25 @@ def survival_demographics():
     url = 'https://raw.githubusercontent.com/leontoddjohnson/datasets/main/data/titanic.csv'
     df = pd.read_csv(url)
 
+    # Rename the columns in lowercase
+    df.rename(columns={'Pclass': 'pclass', 'Sex': 'sex', 'Age': 'age', 'PassengerId': 'passengerid', 'Survived': 'survived'}, inplace=True)
+
     # Define age bins and labels
     bins = [0, 12, 19, 59, 120]
     labels = ['Child', 'Teen', 'Adult', 'Senior']
-    df['age_group'] = pd.cut(df['Age'], bins=bins, labels=labels, right=True)
 
-    # Dropping rows with missing age group
-    df = df.dropna(subset=['age_group'])
+    df['age_group'] = pd.cut(df['age'], bins=bins, labels=labels, right=True)
+    df['age_group'] = df['age_group'].astype('category')
 
-    # Grouping and calculating count
+    # Generate all combinations
     all_combinations = pd.MultiIndex.from_product(
-    [sorted(df['Pclass'].unique()), df['Sex'].unique(), df['age_group'].cat.categories],
-    names=['Pclass', 'Sex', 'age_group']
+        [sorted(df['pclass'].unique()), df['sex'].unique(), df['age_group'].cat.categories],
+        names=['pclass', 'sex', 'age_group']
     )
 
-    # Group actual data
-    summary = df.groupby(['Pclass', 'Sex', 'age_group']).agg(
-    n_passengers=('PassengerId', 'count'),
-    n_survivors=('Survived', 'sum')
+    summary = df.groupby(['pclass', 'sex', 'age_group'], observed=False).agg(
+        n_passengers=('passengerid', 'count'),
+        n_survivors=('survived', 'sum')
     )
 
     # To include all combinations, fill missing with 0
