@@ -34,12 +34,14 @@ def survival_demographics():
         n_survivors=('survived', 'sum')
     )
 
-    # To include all combinations, fill missing with 0
+    # To include all combinations and to fill missing with zero
     summary = summary.reindex(all_combinations, fill_value=0).reset_index()
+    summary['age_group'] = summary['age_group'].astype('category')
 
     # Calculate survival rate
     summary['survival_rate'] = summary['n_survivors'] / summary['n_passengers']
     summary['survival_rate'] = summary['survival_rate'].fillna(0)
+
     return summary
 
 
