@@ -22,14 +22,23 @@ def survival_demographics():
     df = df.dropna(subset=['age_group'])
 
     # Grouping and calculating count
-    summary = df.groupby(['Pclass', 'Sex', 'age_group'], observed=False).agg(
-        n_passengers=('PassengerId', 'count'),
-        n_survivors=('Survived', 'sum')
-    ).reset_index()
+    all_combinations = pd.MultiIndex.from_product(
+    [sorted(df['Pclass'].unique()), df['Sex'].unique(), df['age_group'].cat.categories],
+    names=['Pclass', 'Sex', 'age_group']
+    )
+
+    # Group actual data
+    summary = df.groupby(['Pclass', 'Sex', 'age_group']).agg(
+    n_passengers=('PassengerId', 'count'),
+    n_survivors=('Survived', 'sum')
+    )
+
+    # To include all combinations, fill missing with 0
+    summary = summary.reindex(all_combinations, fill_value=0).reset_index()
 
     # Calculate survival rate
     summary['survival_rate'] = summary['n_survivors'] / summary['n_passengers']
-
+    summary['survival_rate'] = summary['survival_rate'].fillna(0)
     return summary
 
 
@@ -67,12 +76,13 @@ def visualize_demographic(summary_df):
 
 #EXERCISE 2
 
-def family_groups(df):
+def family_groups():
     """
     Adds 'family_size' and returns a table grouped by Pclass and family size, 
     showing passenger count and fare statistics.
     """
-
+    df = pd.read_csv("https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv")
+    
     df['family_size'] = df['SibSp'] + df['Parch'] + 1
     grouped = (
         df.groupby(['Pclass', 'family_size'])
@@ -89,10 +99,12 @@ def family_groups(df):
     )
     return grouped
 
-def last_names(df):
+def last_names():
     """
     Extracts last names from the Name column and returning the count
     """
+    df = pd.read_csv("https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv")
+
     last_names = df['Name'].apply(lambda x: x.split(',')[0].strip())
     return last_names.value_counts()
 
